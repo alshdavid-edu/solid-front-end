@@ -74,16 +74,18 @@ The index would look like
 import { toBase64 } from './to-base64.ts'
 import { fromBase64 }from './from-base64.ts'
 import { compress }from './compress.ts'
-import { Image as OGImage } from './image'
+import { Image } from './image'
 
 export const image = {
-  Image: OGImage,
+  Image,
   toBase64,
   fromBase64,
   compress,
 }
 
 export default image
+
+import { Image as OGImage } from './image'
 
 export declare module image {
   export type Image = OGImage
@@ -92,11 +94,13 @@ export declare module image {
 
 A consumer would use the package like:
 
-    import image from './packages/image'
+```typescript
+import image from './packages/image'
 
-    const img = image.fromBase64(base64image)
-    image.compress(img, { ...options })
-    const smallImg = image.toBase64(img)
+const img = image.fromBase64(base64image)
+image.compress(img, { ...options })
+const smallImage = image.toBase64(img)
+```
 
 Here we are encapsulating a single idea and exposing a considered API strategically.
 
