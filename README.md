@@ -33,33 +33,6 @@ Many tools have appeared to solve the remaining challenges. Redux, MobX, VueX to
 
 If we look to the server side, we’ll see that front end software faces the same challenges as real-time event-driven servers because front end is also real-time and event-driven.
 
-In the context of a back end service, the an event creator and event consumer of the service API is another application.
-
-In front end applications, it’s the end user that’s generating and consuming events through a user interface.
-
-A typical server side architecture would look like this:
-
-![](https://cdn-images-1.medium.com/max/4484/1*VySHZGa1lOm_uj6zZ7TNqw.png)
-
-This shows the “business logic” layer functions as a mediator between the different elements that make an application operate.
-
-In the Redux-like sphere, application architectures tend to follow this style:
-
-![](https://cdn-images-1.medium.com/max/3096/1*4C2c3klfqJxqANfncBHyIQ.png)
-
-In this pattern, developers define reducers ahead of time, communicating with the store engine over a message bus. Messages fire all reducers and a code block which satisfies the message type string will execute.
-
-On the back end, this would be a practice similar to embedding business logic within a database using stored procedures. Those stored procedures would be called through the use of thin API layer which communicates to the database.
-
-The main disadvantages to this method are exposure, boilerplate and indirection. While developers can limit the API exposed to parts of the framework, they must do so through the introduction of more indirection.
-
-When glancing at a component it can be hard to discern its behaviour. Additionally, when using your IDE to trace a function to its implementation, the trail runs cold pretty quickly.
-
-However, there are substantial advantages to this method. You get **exceptional** development tooling. A single reactive store means that it’s easy to implement reactivity in an application without implementing the observer/subscriber pattern in multiple places. Time travel capabilities improve the debuggability of user journeys.
-
-*These concepts will be expanded in part 2, where we build an application. 
-For now, this article will dive into engineering design patterns.*
-
 ## SOLID
 
 This is an acronym for five design principles intended to make software designs more understandable, flexible and maintainable.
