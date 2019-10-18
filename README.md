@@ -29,15 +29,9 @@ While effective, this is not without its drawbacks. This approach results in bus
 
 Conversely, libraries like React, Vue and Svelte offer a solution to a much smaller portion of the problem. They only solve view rendering leaving the challenge of dependency management and data flow entirely up to the developers.
 
-Many tools have appeared to solve the remaining challenges. Redux, MobX, VueX to name a few.
-
-If we look to the server side, we’ll see that front end software faces the same challenges as real-time event-driven servers because front end is also real-time and event-driven.
-
 ## SOLID
 
 This is an acronym for five design principles intended to make software designs more understandable, flexible and maintainable.
-
-The summary is that S is about encapsulation and OLID is about abstraction.
 
 * **Single responsibility principle**
 
@@ -48,6 +42,8 @@ The summary is that S is about encapsulation and OLID is about abstraction.
 * **Interface segregation principle**
 
 * **Dependency inversion principle**
+
+_tl;dr: S is about encapsulation and OLID is about abstraction._
 
 ### **Single responsibility principle**
 >  A [class, package] should only have a single responsibility, that is, only changes to one part of the software’s specification should be able to affect the specification of the class.
@@ -64,6 +60,7 @@ This strategy allows developers to isolate concerns by creating packages, levera
 
 A package looks like a self contained concern grouped in such a way that it could be published to npm without any changes:
 
+
     /image
         index.ts
         image.ts
@@ -73,23 +70,25 @@ A package looks like a self contained concern grouped in such a way that it coul
 
 The index would look like
 
-    import { toBase64 } from './to-base64.ts'
-    import { fromBase64 }from './from-base64.ts'
-    import { compress }from './compress.ts'
-    import { Image as OGImage } from './image'
+```typescript
+import { toBase64 } from './to-base64.ts'
+import { fromBase64 }from './from-base64.ts'
+import { compress }from './compress.ts'
+import { Image as OGImage } from './image'
 
-    export const image = {
-      Image: OGImage,
-      toBase64,
-      fromBase64,
-      compress,
-    }
+export const image = {
+  Image: OGImage,
+  toBase64,
+  fromBase64,
+  compress,
+}
 
-    export default image
+export default image
 
-    export declare module image {
-      export type Image = OGImage
-    }
+export declare module image {
+  export type Image = OGImage
+}
+```
 
 A consumer would use the package like:
 
