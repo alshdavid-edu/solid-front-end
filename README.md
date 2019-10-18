@@ -74,22 +74,14 @@ The index would look like
 import { toBase64 } from './to-base64.ts'
 import { fromBase64 }from './from-base64.ts'
 import { compress }from './compress.ts'
-import { Image } from './image'
 
 export const image = {
-  Image,
   toBase64,
   fromBase64,
   compress,
 }
 
 export default image
-
-import { Image as OGImage } from './image'
-
-export declare module image {
-  export type Image = OGImage
-}
 ```
 
 A consumer would use the package like:
