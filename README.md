@@ -63,7 +63,6 @@ A package looks like a self contained concern grouped in such a way that it coul
 
     /image
         index.ts
-        image.ts
         to-base64.ts
         from-base64.ts
         compress.ts
@@ -72,8 +71,8 @@ The index would look like
 
 ```typescript
 import { toBase64 } from './to-base64.ts'
-import { fromBase64 }from './from-base64.ts'
-import { compress }from './compress.ts'
+import { fromBase64 } from './from-base64.ts'
+import { compress } from './compress.ts'
 
 export const image = {
   toBase64,
@@ -96,7 +95,7 @@ const smallImage = image.toBase64(img)
 
 Here we are encapsulating a single idea and exposing a considered API strategically.
 
-*This topic is expanded upon in the “Package Oriented Design” section below.*
+*“Package Oriented Design” will be expanded on in a section below.*
 
 ### **Open–closed principle**
 >  Software entities should be open for extension, but closed for modification.
@@ -120,21 +119,57 @@ With TypeScript, we can use interfaces to achieve this behaviour.
 
 Consider the following class
 
- <iframe src="https://medium.com/media/29e93ab07b066f89ba6b0bb611b30065" frameborder=0></iframe>
+```typescript
+class HTTPClient {
+  constructor(
+    private fetch: window['fetch']
+  ) {}
+  
+  async get(url: string): Promise<any> {
+    const response = await this.fetch(url)
+    const result = await response.json()
+    return result
+  }
+}
+```
 
 We can write a getPosts function which directly depends on the HTTPClient implementation:
 
- <iframe src="https://medium.com/media/9d700132fb171c89ecbb08cd83e1707a" frameborder=0></iframe>
+```typescript
+
+async function getPosts(client: HTTPClient) {
+  const posts = await client.get('https://toasts.com/posts')
+  // Do stuff
+  return posts
+}
+
+const client = new HTTPClient(window.fetch)
+getPosts(client)
+```
 
 Referencing HTTPClient in this way creates a concrete dependency on it. This tightly couples thegetPosts function to the implementation of the HTTPClient.
 
 To alleviate this tight coupling, we change the client argument type from HTTPClient to an interface.
 
- <iframe src="https://medium.com/media/2e62de418ea7345b10c9d4434ff286d0" frameborder=0></iframe>
+```typescript
+interface HTTPGetter {
+  get(url: string): Promise<any>
+}
+```
 
 Now the getPosts function looks like
 
- <iframe src="https://medium.com/media/a33b6916b6ff123ff975fc38d1f8db88" frameborder=0></iframe>
+```typescript
+interface HTTPGetter {
+  get(url: string): Promise<any>
+}
+
+async function getPosts(client: HTTPGetter) {
+  const posts = await client.get('https://toasts.com/posts')
+  // Do stuff
+  return posts
+}
+```
 
 The HTTPClient matches the signature of the HTTPGetter interface, there for it is an acceptable value to use as an argument.
 
@@ -142,7 +177,20 @@ The getPosts function is now loosely coupled to the implementation of HTTPClient
 
 Testability is improved as the client supplies the exact signature that needs to be satisfied in order effectively mock the dependency.
 
- <iframe src="https://medium.com/media/2f6e5dda5677062a72cb2e53ab6f3b6f" frameborder=0></iframe>
+```typescript
+
+class MockHTTPClient {
+  async get(url: string): Promise<any> {
+    return [ ...mockPosts ]
+  }
+}
+
+it('Should obtain posts', async () => {
+    const client = new MockHTTPClient()
+    const result = await getPosts(client)
+    expect(result).toBeTruthy()
+})
+```
 
 Additionally, there is an improvement to code glanceability. When skimming through this file, a reader will be able to get a comprehensive understanding of the behaviour this function will exhibit without requiring additional context.
 
@@ -153,7 +201,18 @@ This describes the idea that interfaces should not provide methods to a client t
 
 Consider the following snippet
 
- <iframe src="https://medium.com/media/e5a6d141ef2daabb27f26a68ff8d64ef" frameborder=0></iframe>
+```typescript
+
+interface Requester {
+  get(url: string): Promise<any>
+  post(url: string, body: any): Promise<any>
+}
+  
+async function getPosts(client: Requester) {
+  const response = await client.get('https://myurl.com/posts')
+  return response
+}
+```
 
 The getPosts function is asking for a dependency which has both a get and post method on it, while it is only using the get
 
@@ -161,7 +220,16 @@ This introduces ambiguity surrounding the behaviour of the function. While a dev
 
 The interface segregation principle states that it’s more valuable to have many small client-specific interfaces which describe the immediate requirements of their consumer.
 
- <iframe src="https://medium.com/media/9be7b8dc7ad6cded57169e324a624265" frameborder=0></iframe>
+```typescript
+interface HTTPGetter {
+  get(url: string): Promise<any>
+}
+  
+async function getPosts(client: HTTPGetter) {
+  const response = await client.get('https://myurl.com/posts')
+  return response
+}
+```
 
 Strategically limiting the behaviour exposed to a function eliminates any ambiguity surrounding its expected result.
 
@@ -171,7 +239,23 @@ In addition, small interfaces make for powerful abstractions, facilitating for s
 
 Often a consumer requires multiple interfaces, when the need arises, a developer would “compose” multiple interfaces into a single, client-specific interface.
 
- <iframe src="https://medium.com/media/a09cb46c7bb7de69cd1aa0973a2e34c8" frameborder=0></iframe>
+```typescript
+interface HTTPGetter {
+  get(url: string): Promise<any>
+}
+
+interface HTTPPoster {
+  get(url: string, body: any): Promise<any>
+}
+
+type PostRequestor = HTTPGetter & HTTPPoster
+  
+async function getPosts(client: PostRequestor) {
+  await client.post('http://myurl.com/alert')
+  const response = await client.get('https://myurl.com/posts')
+  return response
+}
+```
 
 This strategy enables developers to assemble their applications deliberately from small pieces.
 
@@ -188,18 +272,28 @@ Dependency inversion works in conjunction with **inversion of control**, and in 
 
 Consider the following example:
 
- <iframe src="https://medium.com/media/8a556a20d086b4b7b6ee1f42b7f881f2" frameborder=0></iframe>
+```typescript
+class HTTPClient {
+  async get(url: string) {
+     return 'An HTTP Request!'
+  }
+}
+
+export default new HTTPClient()
+```
 
 A consumer of this utility would import and use the instance directly.
 
-    import client from './http-client'
+```typescript
+import client from './http-client'
 
-    function getThings() {
-      client.get('[http://myurl.com/things'](http://myurl.com/things'))
-        .then(result => console.log(result))
-    }
+function getThings() {
+  client.get('[http://myurl.com/things'](http://myurl.com/things'))
+    .then(result => console.log(result))
+}
 
-    getThings()
+getThings()
+```
 
 This is known as the service locator pattern which JavaScript’s module system enables without requiring additional machinery.
 
@@ -211,15 +305,17 @@ Ensuring that dependencies are created and shared through dependency injection w
 
 Example:
 
-    import http from './http-client'
+```typescript
+import http from './http-client'
 
-    function getThings(client: HTTPGetter) {
-      client.get('[http://myurl.com/things'](http://myurl.com/things'))
-        .then(result => console.log(result))
-    }
+function getThings(client: HTTPGetter) {
+  client.get('[http://myurl.com/things'](http://myurl.com/things'))
+    .then(result => console.log(result))
+}
 
-    const client = http.createClient()
-    getThings(client)
+const client = http.createClient()
+getThings(client)
+```
 
 ## Package Oriented Design
 >  “Even though you may know the language, you know the syntax; how you organize and structure your projects can sometimes be confusing” 
@@ -276,11 +372,13 @@ Developers will spend time reading through project code so it’s vital to ensur
 Stutter is the repetition of words within code.
 An example would be something like:
 
-    import users from 'users-package'
+```typescript
+import users from 'users-package'
 
-    const usersStore = new users.Users()
-    const amy = new users.User('Amy')
-    userStore.addUser(amy)
+const usersStore = new users.Users()
+const amy = new users.User('Amy')
+userStore.addUser(amy)
+```
 
 It’s important to avoid code stutter as it is distracting and introduces an additional layer of mental processing on the reader.
 
@@ -288,7 +386,14 @@ Instead strive to pack as much description as possible in a form which is readab
 
 Namespacing exports, using function constructors and singular words to describe package names helps to facilitate this:
 
- <iframe src="https://medium.com/media/c760c4a2016f25e3b98bbe8fd73a7691" frameborder=0></iframe>
+```typescript
+import post from '~/platform/post' 
+
+const postStore = post.createStore()
+
+const newPost = post.create('Hello internet!')
+await postStore.add(newPost)
+```
 
 ## Thank you
 
