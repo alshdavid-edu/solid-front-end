@@ -1,7 +1,5 @@
 #!/bin/sh
 
-node ./.github/deploy.js
-
 aws s3 rm --recursive s3://davidalsh.com/blog
 # aws s3 cp --recursive --content-encoding br --exclude ".github/**" ./ s3://davidalsh.com/blog
 aws s3 cp --recursive ./.github/dist s3://davidalsh.com/blog
