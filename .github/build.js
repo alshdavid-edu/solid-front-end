@@ -1,21 +1,11 @@
 const { readdirSync, readFileSync, existsSync, writeFileSync, statSync } = require('node:fs')
-const { resolve, join, basename, dirname } = require('node:path')
-const childProcess = require('node:child_process')
+const { resolve, join, basename } = require('node:path')
 const yaml = require('./vendor/js-yaml')
+const { spawnSync } = require('./vendor/spawn')
+const { compressFile, compressFolder } = require('./vendor/compress')
 
 const __dirroot = resolve(__dirname, '..')
 const __dirdist = join(__dirname, 'dist')
-
-const spawnSync = (command, options) => {
-  console.log(command.join(' '))
-  const [ exe, ...args ] = command
-  const defaultOptions = {
-    stdio: 'inherit',
-    env: process.env,
-    cwd: __dirroot,
-  }
-  return childProcess.spawnSync(exe, args, { ...defaultOptions, ...options })
-}
 
 spawnSync(['rm', '-rf', __dirdist])
 spawnSync(['mkdir', __dirdist])
@@ -43,6 +33,11 @@ for (const dir of readdirSync(__dirroot)) {
   const meta = {
     title: doc.title,
     folderName: dir,
+    dateCreatedISO: new Date().toISOString(),
+    dateLastEditedISO: new Date().toISOString(),
+    folderURL: `/blog/${dir}`,
+    indexURL: `/blog/${dir}/index.md`,
+    metaURL: `/blog/${dir}/${basename(config)}`,
     tags: doc.tags || []
   }
 
@@ -66,21 +61,3 @@ writeFileSync(
 )
 
 compressFile(join(__dirdist, 'index.json'))
-
-function compressFile(filePath) {
-  const b = basename(filePath)
-  const d = dirname(filePath)
-  // spawnSync(['brotli', '--best', '--force', '-o', b, b], { cwd: d })
-}
-
-function compressFolder(targetDir) {
-  for (const fileName of readdirSync(targetDir)) {
-    const fullTargetPath = join(targetDir, fileName)
-    if (statSync(fullTargetPath).isDirectory()) {
-      compress(fullTargetPath)
-      continue
-    }
-
-    compressFile(fullTargetPath)
-  }
-}
